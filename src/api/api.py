@@ -76,8 +76,8 @@ def candidate_model_paths(from_config: Optional[Path]) -> List[Path]:
     """Yield ordered candidate model directories (absolute)."""
     candidates: List[Path] = []
     # New preferred structure
-    candidates.append(project_root / "models" / "arabic_sentiment_model" / "best_model")
-    candidates.append(project_root / "models" / "arabic_sentiment_model")
+    candidates.append(project_root / "outputs" / "arabic_sentiment_model" / "best_model")
+    candidates.append(project_root / "outputs" / "arabic_sentiment_model")
     # Config-derived
     if from_config is not None:
         try:

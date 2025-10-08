@@ -3,7 +3,7 @@
 
 run_name: "arabic_sentiment_classifier"
 seed: 42
-output_dir: "models/arabic_sentiment_model"
+output_dir: "outputs/arabic_sentiment_model"
 
 # Data Configuration
 data:
@@ -22,13 +22,7 @@ data:
 
 # Model Configuration
 model:
-  # Best Arabic models for sentiment analysis
-  pretrained_name: "aubmindlab/bert-base-arabertv2"  
-  # Alternatives:
-  # "asafaya/bert-base-arabic"
-  # "CAMeL-Lab/bert-base-arabic-camelbert-mix"
-  # "UBC-NLP/MARBERT"
-  
+  pretrained_name: "aubmindlab/bert-base-arabertv2" # Modern Arabic BERT
   dropout: 0.1
   attention_dropout: 0.1
 

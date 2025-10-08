@@ -12,8 +12,8 @@ class ProductClassifier:
     def __init__(self):
         # Prefer local fine-tuned model directory if present, otherwise fallback to HF hub model
         local_model_dirs = [
-            Path("models/product_detector_model/best_model"),
-            Path("models/product_detector_model"),
+            Path("outputs/product_detector_model/best_model"),
+            Path("outputs/product_detector_model"),
         ]
         detected_local = next((str(p) for p in local_model_dirs if p.exists()), None)
         self.model_name = os.getenv("MODEL_NAME", detected_local or "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli")
