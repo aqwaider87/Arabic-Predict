@@ -1,0 +1,221 @@
+# Arabic Sentiment Classification Configuration
+# Returns one of: ايجابي (positive), سلبي (negative), محايد (neutral)
+
+run_name: "arabic_sentiment_classifier"
+seed: 42
+output_dir: "models/arabic_sentiment_model"
+
+# Data Configuration
+data:
+  # csv_path: "data/mix_sample_arabic_data.csv"
+  csv_path: "data/Emirati_Dataset_ESAAD.csv"
+  text_column: "text"          # Column containing Arabic text
+  label_column: "sentiment"    # Column containing sentiment labels
+  max_length: 15512             # Maximum sequence length
+  valid_size: 0.15            # Validation set size
+  test_size: 0.15             # Test set size
+  
+  # Text validation settings
+  min_text_length: 2          # Minimum text length in characters
+  max_text_length: 1000       # Maximum text length in characters
+  min_arabic_ratio: 0.5       # Minimum ratio of Arabic characters
+
+# Model Configuration
+model:
+  # Best Arabic models for sentiment analysis
+  pretrained_name: "aubmindlab/bert-base-arabertv2"  
+  # Alternatives:
+  # "asafaya/bert-base-arabic"
+  # "CAMeL-Lab/bert-base-arabic-camelbert-mix"
+  # "UBC-NLP/MARBERT"
+  
+  dropout: 0.1
+  attention_dropout: 0.1
+
+# Training Configuration
+train:
+  num_train_epochs: 5
+  batch_size: 16
+  eval_batch_size: 32
+  learning_rate: 2e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  logging_steps: 50
+  
+  # Advanced settings
+  gradient_accumulation_steps: 1
+  max_grad_norm: 1.0
+  label_smoothing: 0.1
+  
+  # Hardware optimization
+  fp16: false                 # Enable for modern GPUs
+  bf16: false                 # Enable for A100/H100 GPUs
+
+# Early Stopping
+early_stopping:
+  enabled: true
+  patience: 3
+  min_delta: 0.001
+
+# Class balancing (for imbalanced sentiment data)
+class_balancing:
+  enabled: true
+  method: "class_weights"     # Handle imbalanced classes
+
+# Model calibration for better confidence estimates
+calibration:
+  enabled: true
+  temperature_scaling: true
+  bias_correction: true
+
+# Validation settings
+validation:
+  # Text must contain these minimum Arabic characteristics
+  require_arabic_content: true
+  normalize_arabic: true
+  remove_diacritics: true
+  
+  # Handle mixed language content
+  allow_mixed_language: true
+  min_arabic_percentage: 50   # Minimum percentage of Arabic characters
+
+# Label mapping settings
+labels:
+  # The system will automatically convert various label formats to Arabic
+  # Supported input formats will be converted to: ايجابي, سلبي, محايد
+  
+  # Automatic conversion mappings:
+  positive_variants: ["positive", "pos", "good", "1", 1, "ايجابي", "إيجابي"]
+  negative_variants: ["negative", "neg", "bad", "0", 0, "سلبي", "سيء"]
+  neutral_variants: ["neutral", "neu", "mixed", "-1", -1, "محايد", "عادي"]
+  
+  # Final output labels (DO NOT CHANGE)
+  output_labels:
+    positive: "ايجابي"
+    negative: "سلبي" 
+    neutral: "محايد"
+
+# Text preprocessing
+preprocessing:
+  # Arabic text normalization
+  normalize_alef: true        # أ، إ، آ -> ا
+  normalize_teh_marbuta: true # ة -> ه
+  normalize_yeh: true         # ي، ی -> ى
+  remove_diacritics: true     # Remove تشكيل
+  
+  # Cleaning options
+  remove_extra_spaces: true
+  remove_empty_lines: true
+  min_words: 1               # Minimum number of words
+  
+  # Advanced cleaning
+  remove_urls: true
+  remove_mentions: true       # @username
+  remove_hashtags: false      # Keep hashtags as they may contain sentiment
+  remove_emojis: false        # Keep emojis for sentiment analysis (IMPORTANT!)
+  
+  # Emoji handling
+  emoji_support: true         # Enable emoji classification
+  emoji_only_classification: true  # Allow classification of emoji-only text
+  emoji_weight: 0.3          # Weight of emoji sentiment vs text sentiment (0.0-1.0)
+
+# Language validation
+language_validation:
+  arabic_only: true          # Only accept Arabic text
+  min_arabic_ratio: 0.3      # Minimum ratio of Arabic characters for mixed content
+  reject_english_only: true  # Reject English-only text with specific message
+  
+  # Language detection messages
+  english_rejection_message: "هذا النموذج مُصمم للغة العربية فقط. يرجى إدخال نص باللغة العربية."
+  low_arabic_message: "هذا النموذج مُصمم للغة العربية فقط. النص يحتوي على نسبة قليلة من الأحرف العربية."
+  
+  # Mixed language handling
+  allow_mixed_with_arabic: true     # Allow mixed content if Arabic is dominant
+  allow_english_with_emojis: false  # Don't allow English text even with emojis
+
+# Emoji classification settings
+emoji_classification:
+  enabled: true
+  
+  # Confidence levels for emoji-only predictions
+  high_confidence_threshold: 0.95   # For clear positive/negative emojis
+  neutral_confidence: 0.90          # For neutral or mixed emojis
+  
+  # Emoji sentiment thresholds
+  dominant_sentiment_threshold: 0.6  # Minimum ratio for dominant sentiment
+  
+  # Classification method priority
+  emoji_only_method: "emoji_analysis"              # For emoji-only text
+  mixed_content_method: "neural_model_with_emoji_support"  # For text + emoji
+
+# Prediction settings
+prediction:
+  # Confidence thresholds
+  min_confidence: 0.6        # Minimum confidence to accept prediction
+  uncertainty_threshold: 0.8  # If max probability < this, flag as uncertain
+  
+  # Output format
+  return_probabilities: true
+  return_confidence: true
+  return_cleaned_text: true
+  
+  # Error handling
+  handle_invalid_text: true
+  default_on_error: "محايد"   # Default prediction if text is invalid
+
+# Evaluation metrics
+evaluation:
+  primary_metric: "f1_macro"
+  compute_per_class_metrics: true
+  
+  # Sentiment-specific metrics
+  metrics:
+    - "accuracy"
+    - "f1_macro"
+    - "f1_weighted" 
+    - "precision_macro"
+    - "recall_macro"
+    - "confusion_matrix"
+
+# Export settings
+export:
+  save_model: true
+  save_tokenizer: true
+  save_config: true
+  save_label_mappings: true
+  save_calibration: true
+  
+  # Additional export formats
+  export_onnx: false
+  export_torchscript: false
+  quantize_int8: false
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  save_training_log: true
+  log_predictions: false      # Set to true for debugging
+  
+  # Progress tracking
+  show_progress_bar: true
+  log_every_n_steps: 50
+
+# Hardware settings
+hardware:
+  device: "auto"              # auto, cpu, cuda, mps
+  num_workers: 4              # Data loader workers
+  pin_memory: true            # Faster GPU transfer
+  
+# Arabic-specific optimizations
+arabic_optimizations:
+  # Tokenization
+  use_arabic_tokenizer: true
+  handle_code_switching: true  # Mixed Arabic-English text
+  
+  # Model optimizations
+  arabic_vocab_focus: true
+  dialectal_support: true      # Support for Arabic dialects
+  
+  # Text analysis
+  detect_arabic_ratio: true
+  validate_arabic_content: true
