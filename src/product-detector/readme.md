@@ -27,7 +27,7 @@ source .venv/bin/activate  # على ويندوز: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # تأكد من وجود ملف .env (أو متغيرات البيئة)
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8006
+uvicorn src.product-detector.app.main:app --reload --host 0.0.0.0 --port 8006
 
 
 curl -X POST http://localhost:8000/product/predict \
