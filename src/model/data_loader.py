@@ -11,6 +11,7 @@ import logging
 
 from config import SentimentLabels
 from validator import ArabicValidator
+from data_augmentation import augment_dataset
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +179,49 @@ class DataLoader:
         
         return train_df, valid_df, test_df
     
+    def augment_data(self, df: pd.DataFrame, text_col: str, label_col: str) -> pd.DataFrame:
+        """Apply data augmentation to training data"""
+        aug_config = self.config.get('augmentation', {})
+        
+        if not aug_config.get('enabled', False):
+            logger.info("📊 Data augmentation: DISABLED")
+            return df
+        
+        logger.info("🔄 Applying data augmentation...")
+        
+        # Extract parameters
+        n_aug = aug_config.get('n_aug', 2)
+        balance_classes = aug_config.get('balance_classes', True)
+        
+        try:
+            # Augment
+            augmented_texts, augmented_labels = augment_dataset(
+                texts=df[text_col].tolist(),
+                labels=df[label_col].tolist(),
+                n_aug=n_aug,
+                balance_classes=balance_classes
+            )
+            
+            # Create new dataframe
+            aug_df = pd.DataFrame({
+                text_col: augmented_texts,
+                label_col: augmented_labels
+            })
+            
+            logger.info(f"✅ Data augmentation: {len(df)} → {len(aug_df)} samples")
+            
+            # Show distribution
+            label_dist = aug_df[label_col].value_counts()
+            for label, count in label_dist.items():
+                logger.info(f"   {label}: {count}")
+            
+            return aug_df
+            
+        except Exception as e:
+            logger.error(f"❌ Data augmentation failed: {e}")
+            logger.info("⚠️ Continuing without augmentation")
+            return df
+    
     def prepare_data(self, file_path: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Complete data preparation pipeline"""
         data_config = self.config.get('data', {})
@@ -196,6 +240,9 @@ class DataLoader:
         
         # Clean dataset
         df = self.clean_dataset(df, text_col, label_col)
+        
+        # Apply data augmentation (before splitting)
+        df = self.augment_data(df, text_col, label_col)
         
         # Split data
         train_df, valid_df, test_df = self.split_data(df, label_col)

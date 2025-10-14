@@ -12,6 +12,7 @@ import json
 import time
 
 from sklearn.metrics import accuracy_score, f1_score
+from sklearn.utils.class_weight import compute_class_weight
 from transformers import (
     AutoTokenizer, 
     AutoModelForSequenceClassification, 
@@ -23,6 +24,7 @@ from transformers import (
 from datasets import Dataset
 
 from config import SentimentLabels
+from weighted_trainer import WeightedLossTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +117,9 @@ class SentimentTrainer:
             weight_decay=training_config.get('weight_decay', 0.01),
             warmup_ratio=training_config.get('warmup_ratio', 0.1),
             
+            # Learning rate scheduling - ADDED
+            lr_scheduler_type=training_config.get('lr_scheduler_type', 'cosine'),
+            
             # Evaluation and saving
             eval_strategy="steps",
             eval_steps=training_config.get('eval_steps', 500),
@@ -169,6 +174,38 @@ class SentimentTrainer:
         logger.info("No valid checkpoints found")
         return None
     
+    def compute_class_weights(self, train_df: pd.DataFrame) -> Optional[torch.Tensor]:
+        """Compute class weights for imbalanced datasets"""
+        class_balance_config = self.config.get('class_balancing', {})
+        
+        if not class_balance_config.get('enabled', False):
+            logger.info("⚖️ Class balancing disabled")
+            return None
+        
+        method = class_balance_config.get('method', 'class_weights')
+        
+        if method == 'class_weights':
+            try:
+                labels = train_df['label_id'].values
+                class_weights = compute_class_weight(
+                    class_weight='balanced',
+                    classes=np.unique(labels),
+                    y=labels
+                )
+                class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
+                
+                logger.info(f"⚖️ Computed class weights: {class_weights}")
+                logger.info(f"   {SentimentLabels.POSITIVE}: {class_weights[0]:.3f}")
+                logger.info(f"   {SentimentLabels.NEGATIVE}: {class_weights[1]:.3f}")
+                logger.info(f"   {SentimentLabels.NEUTRAL}: {class_weights[2]:.3f}")
+                
+                return class_weights_tensor
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to compute class weights: {e}")
+                return None
+        
+        return None
+    
     def train(self, train_df: pd.DataFrame, valid_df: pd.DataFrame, 
               text_col: str, resume: bool = True) -> Trainer:
         """Train the model"""
@@ -197,16 +234,33 @@ class SentimentTrainer:
         else:
             logger.info("🆕 Starting fresh training (resume disabled)")
         
-        # Create trainer
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=valid_dataset,
-            processing_class=tokenizer,
-            compute_metrics=self.compute_metrics,
-            callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
-        )
+        # Compute class weights for imbalanced datasets
+        class_weights = self.compute_class_weights(train_df)
+        
+        # Create trainer (weighted if class weights available)
+        if class_weights is not None:
+            logger.info("✅ Using WeightedLossTrainer for class imbalance")
+            trainer = WeightedLossTrainer(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=valid_dataset,
+                processing_class=tokenizer,
+                compute_metrics=self.compute_metrics,
+                callbacks=[EarlyStoppingCallback(early_stopping_patience=3)],
+                class_weights=class_weights
+            )
+        else:
+            logger.info("✅ Using standard Trainer")
+            trainer = Trainer(
+                model=model,
+                args=training_args,
+                train_dataset=train_dataset,
+                eval_dataset=valid_dataset,
+                processing_class=tokenizer,
+                compute_metrics=self.compute_metrics,
+                callbacks=[EarlyStoppingCallback(early_stopping_patience=3)]
+            )
         
         # Train
         try:

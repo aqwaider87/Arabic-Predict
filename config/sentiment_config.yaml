@@ -11,7 +11,7 @@ data:
   csv_path: "data/Emirati_Dataset_ESAAD.csv"
   text_column: "text"          # Column containing Arabic text
   label_column: "sentiment"    # Column containing sentiment labels
-  max_length: 15512             # Maximum sequence length
+  max_length: 512              # Maximum sequence length (BERT limit)
   valid_size: 0.15            # Validation set size
   test_size: 0.15             # Test set size
   
@@ -34,6 +34,7 @@ train:
   learning_rate: 2e-5
   weight_decay: 0.01
   warmup_ratio: 0.1
+  lr_scheduler_type: "cosine"  # cosine, linear, polynomial, constant
   logging_steps: 50
   
   # Advanced settings
@@ -112,6 +113,13 @@ preprocessing:
   emoji_support: true         # Enable emoji classification
   emoji_only_classification: true  # Allow classification of emoji-only text
   emoji_weight: 0.3          # Weight of emoji sentiment vs text sentiment (0.0-1.0)
+
+# Data Augmentation (NEW - Enable for more training data)
+augmentation:
+  enabled: false  # Set to 'true' to enable augmentation
+  n_aug: 2        # Number of augmented versions per sample
+  balance_classes: true  # Balance classes through augmentation
+  methods: ["synonym", "swap", "delete"]
 
 # Language validation
 language_validation:

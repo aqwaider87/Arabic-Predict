@@ -11,13 +11,13 @@ pip install fastapi uvicorn pydantic
 
 ```bash
 # With trained model path
-python src/api/app.py --model outputs/arabic_sentiment_model/best_model --config config/sentiment_config.yaml --host 0.0.0.0 --port 8001
+python src/api/api.py --model outputs/arabic_sentiment_model/best_model --config config/sentiment_config.yaml --host 0.0.0.0 --port 8001
 
 # With config file
-python src/api/app.py --config config/sentiment_config.yaml --port 8001
+python src/api/api.py --config config/sentiment_config.yaml --port 8001
 
 # Development mode with auto-reload
-python src/api/app.py --model outputs/arabic_sentiment_model/best_model --reload
+python src/api/api.py --model outputs/arabic_sentiment_model/best_model --reload
 ```
 
 ## 🔄 Updates and Versioning

@@ -6,10 +6,10 @@ Arabic Sentiment Classification API
 This API provides HTTP endpoints for sentiment classification of Arabic text.
 
 Usage:
-    python src/api/app.py --model outputs/arabic_sentiment_model/best_model --port 8001
+    python src/api/api.py --model outputs/arabic_sentiment_model/best_model --port 8001
     
     Or with config:
-    python src/api/app.py --config config/sentiment_config.yaml --port 8001
+    python src/api/api.py --config config/sentiment_config.yaml --port 8001
 
 API Endpoints:
     POST /predict - Single text prediction
@@ -467,13 +467,13 @@ def main():
         epilog="""
 Examples:
     # Start with trained model
-    python app.py --model outputs/arabic_sentiment_model/best_model --port 8001
+    python api.py --model outputs/arabic_sentiment_model/best_model --port 8001
     
     # Start with config file
-    python app.py --config config/sentiment_config.yaml --port 8001
+    python api.py --config config/sentiment_config.yaml --port 8001
     
     # Start with custom host
-    python app.py --model outputs/arabic_sentiment_model/best_model --host 0.0.0.0 --port 8080
+    python api.py --model outputs/arabic_sentiment_model/best_model --host 0.0.0.0 --port 8080
     
 API Usage:
     # Single prediction
@@ -553,7 +553,7 @@ Notes:
         logger.info("2. If no model exists, train one:")
         logger.info("   python main.py train --config config/sentiment_config.yaml\n")
         logger.info("3. If model exists elsewhere, specify its path:")
-        logger.info("   python app.py --model /correct/path/to/model\n")
+        logger.info("   python api.py --model /correct/path/to/model\n")
         logger.info("4. Common model locations:")
         logger.info("   - outputs/arabic_sentiment_model/best_model")
         logger.info("   - outputs/best_model")
